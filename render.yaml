@@ -1,0 +1,19 @@
+# Render reads this file to set up the EZtrash website (New > Blueprint). See README.md.
+services:
+  - type: web
+    runtime: python
+    name: eztrash
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    # The website saves rules into this repo. Without this, every saved rule would rebuild the website.
+    autoDeployTrigger: 'off'
+    envVars:
+      - key: EZTRASH_SECRET            # keeps people signed in when the website restarts
+        generateValue: true
+      - key: EZTRASH_ACCESS_CODE       # the 6 capital letters people type to sign in, like KXQMRB
+        sync: false
+      - key: EZTRASH_GITHUB_REPO       # this repo, like yourname/eztrash-website
+        sync: false
+      - key: EZTRASH_GITHUB_TOKEN      # a GitHub token that can write to this repo (see README.md)
+        sync: false
