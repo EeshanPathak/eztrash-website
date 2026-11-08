@@ -2,7 +2,7 @@
   "version": 1,
   "city": "Washington, DC",
   "created": "2026-11-04T23:36:30",
-  "source_name": "Official city page (dpw.dc.gov/service/residential-recycling-collection), read Nov 2026",
+  "source_name": "Official city page (dpw.dc.gov/service/residential-recycling-collection), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "311",
     "hazardous": "311"
@@ -73,20 +73,20 @@
       "note": ""
     },
     "newspaper": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "Newspapers/Magazines",
+      "quote_verified": true,
+      "note": "ZeroWasteDC residential recycling list."
     },
     "paper_cup": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "Cups & Containers",
+      "quote_verified": true,
+      "note": "ZeroWasteDC lists paper cups under Paper."
     },
     "carton": {
       "bin": "recycling",

@@ -13,6 +13,7 @@ came from. You check everything before the can uses it.
 Needs: pip install flask pypdf python-docx
 """
 import argparse
+import hashlib
 import hmac
 import io
 import json
@@ -82,7 +83,7 @@ elif not re.fullmatch(r"[A-Z]{6}", ACCESS_CODE):          # an older, longer cod
     os.chmod(CODE_FILE, 0o600)
 
 
-# The Pi proves it's ours with this key when it downloads the rules (shown on the Share page).
+# The Pi proves it's ours with this key when it downloads the rules (shown on the Sync page).
 SYNC_KEY = read_private(SYNC_KEY_FILE, lambda: secrets.token_urlsafe(24))
 
 
@@ -196,9 +197,13 @@ def login():
         wait = locked_for(who)
         if wait:
             error = f"Too many wrong codes. Try again in {wait // 60 + 1} minute(s)."
-        elif hmac.compare_digest(request.form.get("code", "").strip().upper(), ACCESS_CODE):
+        elif code_ok(request.form.get("code", "").strip().upper()):
             _fails.pop(who, None)
             session["ok"] = True
+            if ROTATE:
+                rotate_code()
+                return redirect(url_for("home", msg="You're in. The code you just used won't work again: "
+                                        "pass the new one below to the next person."))
             return redirect(url_for("home"))
         else:
             time.sleep(1)  # slows down guessing
@@ -208,7 +213,47 @@ def login():
             left = MAX_TRIES - n
             error = ("That code is not right. " + ((f"{left} tries left." if left > 1 else "1 try left.") if left > 0 else
                      f"Locked for {LOCK_SECONDS // 60} minutes."))
-    return page(LOGIN, "Sign in", error=error, on_cloud=ON_CLOUD)
+    return page(LOGIN, "Sign in", error=error, on_cloud=ON_CLOUD, rotate=ROTATE)
+
+
+# ---------- online version: a new sign-in code after every sign-in ----------
+# The code someone used stops working as soon as they're in, and the website shows them the next one to pass on.
+# EZTRASH_ACCESS_CODE (set in Render's settings) always keeps working as the owner's backup code.
+# The current code is saved scrambled (with the website's secret) in access.json, which goes to the GitHub repo,
+# so a restart doesn't lose it and the public repo doesn't give it away.
+ROTATE = os.environ.get("EZTRASH_ROTATE_CODE", "1" if ON_CLOUD else "0") == "1"
+ACCESS_FILE = os.path.join(rbk.HERE, "access.json")
+_rot = {"code": ""}   # the current code in plain letters, known only until the website restarts
+
+
+def _code_mac(code):
+    return hmac.new(str(app.secret_key).encode(), code.encode(), hashlib.sha256).hexdigest()
+
+
+def _stored_mac():
+    try:
+        with open(ACCESS_FILE) as f:
+            return json.load(f).get("mac", "")
+    except (OSError, ValueError):
+        return ""
+
+
+def code_ok(code):
+    if hmac.compare_digest(code, ACCESS_CODE):
+        return True
+    if not ROTATE:
+        return False
+    if _rot["code"]:
+        return hmac.compare_digest(code, _rot["code"])
+    mac = _stored_mac()
+    return bool(mac) and hmac.compare_digest(_code_mac(code), mac)
+
+
+def rotate_code():
+    new = new_code()
+    _rot["code"] = new
+    rbk._atomic_write(ACCESS_FILE, {"mac": _code_mac(new), "changed": time.strftime("%Y-%m-%d %H:%M")})
+    return new
 
 
 # Lockout: 5 wrong codes from one device locks it out for 10 minutes.
@@ -319,11 +364,36 @@ def qr_terminal(text, color=True):
     return lines
 
 
-@app.route("/qr")
-def qr():
+@app.route("/sync")
+def sync_page():
     url, public = share_url()
-    return page(QR_PAGE, "Share", url=url, public=public, svg=qr_svg(url), on_cloud=ON_CLOUD, sync_key=SYNC_KEY,
-                gh_repo=rbk.GH_REPO if rbk.GH_ON else "")
+    return page(SYNC_PAGE, "Sync the trash can", url=url, public=public, on_cloud=ON_CLOUD, sync_key=SYNC_KEY,
+                gh_repo=rbk.GH_REPO if rbk.GH_ON else "", city=rbk.load_active()["city"])
+
+
+@app.route("/qr")
+def qr():   # old address of this page
+    return redirect(url_for("sync_page"))
+
+
+_site_saved = {"done": False}
+
+
+@app.before_request
+def remember_site_address():
+    """Online version: save this website's address to the GitHub repo, so the trash can can show its QR code."""
+    if _site_saved["done"] or not (ON_CLOUD and rbk.GH_ON) or request.endpoint in (None, "static", "api_rules"):
+        return
+    _site_saved["done"] = True
+    url = share_url()[0]
+    path = os.path.join(rbk.HERE, "site.json")
+    try:
+        with open(path) as f:
+            if json.load(f).get("url") == url:
+                return
+    except (OSError, ValueError):
+        pass
+    rbk._atomic_write(path, {"url": url})
 
 
 @app.route("/api/rules")
@@ -360,7 +430,8 @@ def home():
         r = active["rules"][key]
         bins[r["bin"]].append((info[0].split(" (")[0], r["reason"]))
     return page(HOME, "EZtrash", active=active, city_picked=city_picked, own_rules=own_rules, bins=bins, cov=model_coverage(), preset_groups=preset_groups,
-                saved=rbk.list_saved(), msg=request.args.get("msg", ""), err=request.args.get("err", "") or rbk.GH_ERROR)
+                saved=rbk.list_saved(), msg=request.args.get("msg", ""), err=request.args.get("err", "") or rbk.GH_ERROR,
+                rotate=ROTATE, next_code=_rot["code"])
 
 
 STATES = {"AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado",
@@ -822,12 +893,17 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid var(--li
 .sharepage code{background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.85rem}
 .qrbtn{background:transparent;border:1.5px solid #3D6B55;color:#C9DA3F;width:40px;height:40px;padding:0;border-radius:10px;display:grid;place-items:center;text-decoration:none}
 .qrbtn:hover{background:#1B4A38}.qrbtn svg{width:20px;height:20px}
+.syncbtn{width:auto;padding:0 12px;display:flex;gap:7px;font:700 .85rem var(--body);white-space:nowrap}
+@media(max-width:420px){.syncbtn span{display:none}.syncbtn{width:40px;padding:0;justify-content:center}}
 .hdrbtns{display:flex;gap:8px}
 @media print{header,.noprint,.savebar{display:none!important}body{background:#fff}.sharepage .mute{color:#333}}
 input.codebox{font:800 1.8rem var(--display);letter-spacing:.35em;text-transform:uppercase;text-align:center;max-width:260px;padding:10px 12px}
 input.codebox::placeholder{color:var(--line);letter-spacing:.35em}
+.nextcode{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--chart,#C9DA3F);border-radius:10px;padding:10px 14px;margin:0 0 14px}
+.nextcode span{font-weight:700;font-size:.9rem}.nextcode b{font:800 1.4rem var(--display);letter-spacing:.3em}.nextcode small{flex-basis:100%;color:var(--mute,#5b6e63);font-size:.82rem}
+.syncpage .steps{text-align:left;margin:8px 0;padding-left:20px}.syncpage .card{text-align:left}
 </style></head><body>
-<header><div class="bar"><a class="brand" href="/"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><clipPath id="c0C9"><path d="M12.60 23.0H51.40L47.55 50.0Q47.30 53.0 44.30 53.0H20.10Q17.10 53.0 16.85 50.0Z"/></clipPath></defs><rect width="64" height="64" rx="15" fill="#C9DA3F"/><path d="M27.5 13.6v-1.8c0-1 .8-1.8 1.8-1.8h5.4c1 0 1.8.8 1.8 1.8v1.8" fill="none" stroke="#13392B" stroke-width="2.6" stroke-linecap="round"/><rect x="9.5" y="13.5" width="45" height="5.6" rx="2.8" fill="#13392B"/><path d="M11.60 23.00 L31.40 23.00 L31.40 28.00 L12.27 28.00Z M14.93 48.00 L31.40 48.00 L31.40 54.00 L15.60 54.00Z M11.60 23.00 L18.00 23.00 L22.00 54.00 L15.60 54.00Z M14.60 35.50 L27.40 35.50 L27.40 40.50 L14.60 40.50Z M31.40 23.00 L52.40 23.00 L51.80 28.00 L31.40 28.00Z M31.40 48.00 L49.40 48.00 L48.80 54.00 L31.40 54.00Z M44.10 27.70 L51.80 27.70 L40.60 48.30 L33.30 48.30Z" fill="#13392B" clip-path="url(#c0C9)"/></svg><span class="word">EZtrash</span></a><span class="hdrbtns"><a class="qrbtn" href="/qr" aria-label="Show a QR code for this app" title="QR code"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2zM16 16h2v2h-2z" fill="currentColor"/></svg></a><button type="button" class="theme" id="theme" aria-label="Switch between light and dark mode" title="Light / dark mode"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></span><script>(function(){var b=document.getElementById("theme"),r=document.documentElement;function dark(){return r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;}function label(){b.setAttribute("aria-label",dark()?"Switch to light mode":"Switch to dark mode");}b.addEventListener("click",function(){var t=dark()?"light":"dark";r.dataset.theme=t;try{localStorage.setItem("eztrash-theme",t);}catch(e){}label();});label();})();</script></div></header>
+<header><div class="bar"><a class="brand" href="/"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><clipPath id="c0C9"><path d="M12.60 23.0H51.40L47.55 50.0Q47.30 53.0 44.30 53.0H20.10Q17.10 53.0 16.85 50.0Z"/></clipPath></defs><rect width="64" height="64" rx="15" fill="#C9DA3F"/><path d="M27.5 13.6v-1.8c0-1 .8-1.8 1.8-1.8h5.4c1 0 1.8.8 1.8 1.8v1.8" fill="none" stroke="#13392B" stroke-width="2.6" stroke-linecap="round"/><rect x="9.5" y="13.5" width="45" height="5.6" rx="2.8" fill="#13392B"/><path d="M11.60 23.00 L31.40 23.00 L31.40 28.00 L12.27 28.00Z M14.93 48.00 L31.40 48.00 L31.40 54.00 L15.60 54.00Z M11.60 23.00 L18.00 23.00 L22.00 54.00 L15.60 54.00Z M14.60 35.50 L27.40 35.50 L27.40 40.50 L14.60 40.50Z M31.40 23.00 L52.40 23.00 L51.80 28.00 L31.40 28.00Z M31.40 48.00 L49.40 48.00 L48.80 54.00 L31.40 54.00Z M44.10 27.70 L51.80 27.70 L40.60 48.30 L33.30 48.30Z" fill="#13392B" clip-path="url(#c0C9)"/></svg><span class="word">EZtrash</span></a><span class="hdrbtns"><a class="qrbtn syncbtn" href="/sync" aria-label="Sync the trash can" title="Sync the trash can"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.6-4.5M4 13a8 8 0 0 0 14.6 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5.4 2.5v4h4M18.6 21.5v-4h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sync trash can</span></a><button type="button" class="theme" id="theme" aria-label="Switch between light and dark mode" title="Light / dark mode"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></span><script>(function(){var b=document.getElementById("theme"),r=document.documentElement;function dark(){return r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;}function label(){b.setAttribute("aria-label",dark()?"Switch to light mode":"Switch to dark mode");}b.addEventListener("click",function(){var t=dark()?"light":"dark";r.dataset.theme=t;try{localStorage.setItem("eztrash-theme",t);}catch(e){}label();});label();})();</script></div></header>
 <main>{{ content|safe }}</main></body></html>"""
 
 
@@ -836,38 +912,43 @@ def page(body, title, **ctx):
     return render_template_string(SHELL, content=render_template_string(body, **ctx), title=title)
 
 
-QR_PAGE = """<div class="sharepage">
-<h1>Scan to open EZtrash</h1>
-{% if svg %}<div class="qrbox">{{ svg|safe }}</div>{% else %}<div class="note bad">A QR code can't be made here (it needs OpenCV or segno), so share the link below.</div>{% endif %}
-<p class="sharelink"><a href="{{ url }}">{{ url }}</a></p>
-{% if on_cloud %}<p class="mute">This link works from anywhere, even when the can is off. People still need the access code to change rules.</p>
-{% elif public %}<p class="mute">This link works from anywhere. People still need the access code to change rules.</p>
-{% else %}<p class="mute">This link only works on the same Wi-Fi as the Pi. For a link that works anywhere, press 2 in the
-EZtrash launcher (first time: press 6 to set up Tailscale), then reload this page.</p>{% endif %}
-{% if on_cloud and gh_repo %}<div class="card noprint connect"><h2>Connect the can</h2>
-<p class="mute">The rules are saved in the GitHub repo <b>{{ gh_repo }}</b>, and the can reads them from there whenever it's on,
-even while this website is asleep. On the Pi, open the EZtrash launcher, press <b>8</b>, and paste this:</p>
+SYNC_PAGE = """<div class="sharepage syncpage">
+<h1>Sync the trash can</h1>
+<p class="mute">Rules the can will use: <b>{{ city }}</b></p>
+{% if on_cloud and gh_repo %}<div class="card connect"><h2>Connect the trash can (once)</h2>
+<p class="mute">This website saves the rules to the GitHub repo <b>{{ gh_repo }}</b>. The trash can downloads them from there every
+90 seconds while it's sorting, even while this website is asleep.</p>
+<ol class="steps"><li>On the trash can, open the EZtrash launcher and press <b>8</b>.</li>
+<li>Paste this, then press Enter when it asks for a sync key:</li></ol>
 <input type="text" readonly value="github:{{ gh_repo }}" onclick="this.select()">
-<p class="mute">Press Enter when it asks for a sync key (a public repo doesn't need one).</p></div>
-{% elif on_cloud %}<div class="card noprint connect"><h2>Connect the can</h2>
-<p class="mute">The can downloads the rules from this website whenever it's on. On the Pi, open the EZtrash launcher, press
-<b>8</b>, and paste these two things:</p>
+<p class="mute">After that it syncs by itself. Once it's connected, press <b>9</b> in the launcher to show this website's QR code
+on the trash can's screen.</p></div>
+{% elif on_cloud %}<div class="card connect"><h2>Connect the trash can (once)</h2>
+<p class="mute">The trash can downloads the rules from this website every 30 seconds while it's sorting. On the trash can, open the
+EZtrash launcher, press <b>8</b>, and paste these two things:</p>
 <label>Website</label><input type="text" readonly value="{{ url }}" onclick="this.select()">
 <label>Sync key</label><input type="text" readonly value="{{ sync_key }}" onclick="this.select()">
-<p class="mute">Keep the sync key private. It only lets the can read the rules; it can't change them.</p></div>{% endif %}
-<p class="noprint"><button type="button" onclick="window.print()">Print</button>
-<a class="btn alt" href="{{ url_for('home') }}">Back</a></p>
+<p class="mute">Keep the sync key private. It only lets the can read the rules; it can't change them. Press <b>9</b> in the launcher to
+show this website's QR code on the trash can's screen.</p></div>
+{% else %}<div class="card connect"><h2>Nothing to sync</h2>
+<p class="mute">This website runs on the trash can itself, so the can always uses the rules you pick here.</p>
+<p class="mute">To let someone open this website on their phone, press <b>9</b> in the trash can's EZtrash launcher. It shows a QR
+code they can scan. {% if not public %}It only works on the same Wi-Fi as the can unless the public link is on (launcher <b>2</b>).{% endif %}</p></div>
+{% endif %}
+<p><a class="btn alt" href="{{ url_for('home') }}">Back</a></p>
 </div>"""
 
 
 LOGIN = """<h1>Sign in to EZtrash</h1><div class="card"><form method="post">
 <label for="code">Access code</label>
 <input id="code" name="code" type="text" class="codebox" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDEF" autofocus>
-<p class="mute">{% if on_cloud %}Ask your team for the 6-letter code.{% else %}The code is printed in the terminal where app.py is running.{% endif %}</p>
+<p class="mute">{% if rotate %}Ask the last person who signed in for the current 6-letter code. It changes after every sign-in.{% elif on_cloud %}Ask your team for the 6-letter code.{% else %}The code is printed in the terminal where app.py is running.{% endif %}</p>
 {% if error %}<p class="bad">{{ error }}</p>{% endif %}
 <button>Sign in</button></form></div>"""
 
 HOME = """{% if msg %}<div class="note">{{ msg }}</div>{% endif %}{% if err %}<div class="note bad">{{ err }}</div>{% endif %}
+{% if rotate and next_code %}<div class="nextcode"><span>Next sign-in code</span><b>{{ next_code }}</b>
+<small>The only code that works for the next person. It changes again when they sign in.</small></div>{% endif %}
 <section class="band" aria-label="Where the can is">
 {% if city_picked %}<p class="label">Sorting for</p>
 <div class="city">{{ active.city }}</div>

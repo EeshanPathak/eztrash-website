@@ -226,7 +226,7 @@ def gh_pull():
     if not GH_ON:
         return
     try:
-        names = ["rulebook.json"]
+        names = ["rulebook.json", "access.json", "site.json"]   # access.json: the online sign-in code (scrambled)
         try:
             names += [f["path"] for f in _gh("GET", "rulebooks") if f.get("name", "").endswith(".json")]
         except urllib.error.HTTPError as e:

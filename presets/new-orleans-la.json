@@ -2,7 +2,7 @@
   "version": 1,
   "city": "New Orleans, LA",
   "created": "2026-11-04T23:41:16",
-  "source_name": "Official city page (nola.gov Recycling), read Nov 2026",
+  "source_name": "Official city page (nola.gov Recycling), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "311",
     "hazardous": "311"
@@ -73,12 +73,12 @@
       "note": ""
     },
     "newspaper": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Probably counts as 'mixed paper' in New Orleans, but not named. Check."
+      "evidence": "mixed paper",
+      "quote_verified": true,
+      "note": "New Orleans curbside list."
     },
     "paper_cup": {
       "bin": "trash",
@@ -97,12 +97,12 @@
       "note": "Not addressed on the city's page; safe default. Check with the city."
     },
     "glass": {
-      "bin": "trash",
-      "reason": "",
+      "bin": "special",
+      "reason": "dropoff",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Glass is not on New Orleans's curbside list; use the Elysian Fields drop-off. Defaulted to trash."
+      "evidence": "Glass (Limit 50lbs.)",
+      "quote_verified": true,
+      "note": "New Orleans: not on the curbside list; take glass to the Recycling Drop-Off Center (2829 Elysian Fields Ave)."
     },
     "cigarette_butt": {
       "bin": "trash",

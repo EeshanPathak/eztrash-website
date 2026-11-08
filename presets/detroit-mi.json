@@ -2,7 +2,7 @@
   "version": 1,
   "city": "Detroit, MI",
   "created": "2026-11-04T23:41:16",
-  "source_name": "Official city page (detroitmi.gov Recycling FAQs), read Nov 2026",
+  "source_name": "Official city page (detroitmi.gov Recycling FAQs), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "313-224-3901 (DPW)",
     "hazardous": "313-224-3901 (DPW)"
@@ -41,12 +41,12 @@
       "note": "Detroit: hard plastics with a recycling symbol."
     },
     "plastic_cup": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "Recycle rigid plastic bottles, jugs, jars, cups, trays, and containers",
+      "quote_verified": true,
+      "note": "Detroit Recycling FAQ."
     },
     "plastic_bag": {
       "bin": "trash",
@@ -81,12 +81,12 @@
       "note": "Covered by Detroit's general 'paper' line."
     },
     "paper_cup": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "Clean and empty paper coffee and soda cups and containers",
+      "quote_verified": true,
+      "note": "Detroit Recycling FAQ."
     },
     "carton": {
       "bin": "trash",

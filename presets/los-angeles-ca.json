@@ -2,7 +2,7 @@
   "version": 1,
   "city": "Los Angeles, CA",
   "created": "2026-11-04T23:41:16",
-  "source_name": "Official city page (sanitation.lacity.gov/services/recycling-collection), read Nov 2026",
+  "source_name": "Official city page (sanitation.lacity.gov/services/recycling-collection), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "311 / LA Sanitation",
     "hazardous": "311 / LA Sanitation"
@@ -17,12 +17,12 @@
       "note": ""
     },
     "spray_can": {
-      "bin": "special",
-      "reason": "hazardous",
+      "bin": "recycling",
+      "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "Empty paint and aerosol cans",
+      "quote_verified": true,
+      "note": "Empty only; partly full aerosol cans go to hazardous waste drop-off."
     },
     "plastic_bottle": {
       "bin": "recycling",
@@ -89,12 +89,12 @@
       "note": "Not addressed on the city's page; safe default. Check with the city."
     },
     "carton": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "All refrigerated, shelf-stable, aseptic packaging",
+      "quote_verified": true,
+      "note": "LA Sanitation Blue Bin page."
     },
     "glass": {
       "bin": "recycling",

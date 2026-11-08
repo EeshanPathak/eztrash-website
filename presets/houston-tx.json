@@ -2,7 +2,7 @@
   "version": 1,
   "city": "Houston, TX",
   "created": "2026-11-04T23:14:18",
-  "source_name": "City of Houston Solid Waste, Recycling Acceptable Items (houstontx.gov/solidwaste/acceptableitems.html), read Nov 2026",
+  "source_name": "City of Houston Solid Waste, Recycling Acceptable Items (houstontx.gov/solidwaste/acceptableitems.html), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "311",
     "hazardous": "311"
@@ -17,12 +17,12 @@
       "note": ""
     },
     "spray_can": {
-      "bin": "special",
-      "reason": "hazardous",
-      "status": "default",
-      "evidence": "",
-      "quote_verified": false,
-      "note": ""
+      "bin": "recycling",
+      "reason": "",
+      "status": "manual",
+      "evidence": "Empty Aerosol Cans",
+      "quote_verified": true,
+      "note": "Houston Acceptable Items. Empty only."
     },
     "plastic_bottle": {
       "bin": "recycling",
@@ -73,12 +73,12 @@
       "note": ""
     },
     "newspaper": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Page lists home and office paper only; defaulted to trash. Confirm."
+      "evidence": "newspapers",
+      "quote_verified": true,
+      "note": "Houston Acceptable Items."
     },
     "paper_cup": {
       "bin": "trash",
@@ -89,20 +89,20 @@
       "note": ""
     },
     "carton": {
-      "bin": "trash",
-      "reason": "",
+      "bin": "special",
+      "reason": "dropoff",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Houston's page is unclear on cartons; defaulted to trash."
+      "evidence": "both aseptic and gable-top cartons such as juice cartons, soup cartons, and milk cartons",
+      "quote_verified": true,
+      "note": "Houston's curbside list contradicts itself on cartons; the city Recycling Centers take them."
     },
     "glass": {
-      "bin": "trash",
-      "reason": "",
+      "bin": "special",
+      "reason": "dropoff",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Houston's page did not list glass; defaulted to trash. Confirm with 311."
+      "evidence": "bottles and jars (clear, green, and brown)",
+      "quote_verified": true,
+      "note": "Houston: not collected curbside; take glass to a city Recycling Center."
     },
     "cigarette_butt": {
       "bin": "trash",

@@ -2,7 +2,7 @@
   "version": 1,
   "city": "Miami-Dade County, FL",
   "created": "2026-11-04T23:41:16",
-  "source_name": "Official city page (miamidade.gov Recycling at Home), read Nov 2026",
+  "source_name": "Official city page (miamidade.gov Recycling at Home), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "311 (305-468-5900)",
     "hazardous": "311 (305-468-5900)"
@@ -41,12 +41,12 @@
       "note": ""
     },
     "plastic_cup": {
-      "bin": "recycling",
+      "bin": "trash",
       "reason": "",
       "status": "manual",
       "evidence": "",
       "quote_verified": false,
-      "note": ""
+      "note": "Miami-Dade's guide says to place only paper, cans, cartons, cardboard, bottles, tubs and jugs in the cart; cups aren't listed."
     },
     "plastic_bag": {
       "bin": "trash",
@@ -81,12 +81,12 @@
       "note": ""
     },
     "paper_cup": {
-      "bin": "recycling",
+      "bin": "trash",
       "reason": "",
       "status": "manual",
       "evidence": "",
       "quote_verified": false,
-      "note": ""
+      "note": "Miami-Dade's guide says to place only paper, cans, cartons, cardboard, bottles, tubs and jugs in the cart; cups aren't listed."
     },
     "carton": {
       "bin": "recycling",

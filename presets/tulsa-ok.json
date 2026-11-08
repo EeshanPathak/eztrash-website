@@ -2,7 +2,7 @@
   "version": 1,
   "city": "Tulsa, OK",
   "created": "2026-11-04T23:41:16",
-  "source_name": "Official city page (cityoftulsa.org Recycling), read Nov 2026",
+  "source_name": "Official city page (cityoftulsa.org Recycling), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "311",
     "hazardous": "311"
@@ -33,12 +33,12 @@
       "note": ""
     },
     "plastic_container": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Tulsa's page lists bottles and jugs only; tubs not named. See tulsarefuse.org."
+      "evidence": "Rigid bottles, jugs, and containers",
+      "quote_verified": true,
+      "note": "Tulsa: containers with a screw-on cap or snap-on lid; not food-soiled."
     },
     "plastic_cup": {
       "bin": "trash",

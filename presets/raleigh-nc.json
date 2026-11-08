@@ -2,7 +2,7 @@
   "version": 1,
   "city": "Raleigh, NC",
   "created": "2026-11-04T23:41:16",
-  "source_name": "Official city page (raleighnc.gov Items You Can Recycle), read Nov 2026",
+  "source_name": "Official city page (raleighnc.gov Items You Can Recycle), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "919-996-3245",
     "hazardous": "919-996-3245"
@@ -81,20 +81,20 @@
       "note": "Covered by Raleigh's general 'paper' line."
     },
     "paper_cup": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "disposable coffee cups",
+      "quote_verified": true,
+      "note": "Raleigh Recycling Do's and Don'ts."
     },
     "carton": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "milk cartons ... juice cartons",
+      "quote_verified": true,
+      "note": "Raleigh Recycling Do's and Don'ts."
     },
     "glass": {
       "bin": "recycling",

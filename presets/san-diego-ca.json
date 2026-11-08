@@ -2,7 +2,7 @@
   "version": 1,
   "city": "San Diego, CA",
   "created": "2026-11-04T23:36:30",
-  "source_name": "Official city page (sandiego.gov/environmental-services/recycling/residential/curbside), read Nov 2026",
+  "source_name": "Official city page (sandiego.gov/environmental-services/recycling/residential/curbside), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "858-694-7000",
     "hazardous": "858-694-7000"
@@ -17,12 +17,12 @@
       "note": ""
     },
     "spray_can": {
-      "bin": "special",
-      "reason": "hazardous",
+      "bin": "recycling",
+      "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "EMPTY aerosol cans",
+      "quote_verified": true,
+      "note": "Empty only."
     },
     "plastic_bottle": {
       "bin": "recycling",
@@ -41,12 +41,12 @@
       "note": ""
     },
     "plastic_cup": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "Clean plastic food containers and cups",
+      "quote_verified": true,
+      "note": "City of San Diego What Goes Where guide."
     },
     "plastic_bag": {
       "bin": "trash",
@@ -89,12 +89,12 @@
       "note": "Not addressed on the city's page; safe default. Check with the city."
     },
     "carton": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "Cartons",
+      "quote_verified": true,
+      "note": "City of San Diego What Goes Where guide."
     },
     "glass": {
       "bin": "recycling",

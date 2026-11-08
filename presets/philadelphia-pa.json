@@ -2,7 +2,7 @@
   "version": 1,
   "city": "Philadelphia, PA",
   "created": "2026-11-04T23:36:30",
-  "source_name": "Official city page (phila.gov/programs/recycling-program/what-to-recycle), read Nov 2026",
+  "source_name": "Official city page (phila.gov/programs/recycling-program/what-to-recycle), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "311",
     "hazardous": "311"
@@ -33,12 +33,12 @@
       "note": ""
     },
     "plastic_container": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Philadelphia lists #1, #2 and #5 bottles, cups and jugs; tubs not named. Check."
+      "evidence": "All food and beverage containers",
+      "quote_verified": true,
+      "note": "Philadelphia: plastics #1, #2 and #5 only."
     },
     "plastic_cup": {
       "bin": "recycling",

@@ -2,7 +2,7 @@
   "version": 1,
   "city": "San Antonio, TX",
   "created": "2026-11-04T23:41:16",
-  "source_name": "Official city page (docsonline.sanantonio.gov What to Recycle), read Nov 2026",
+  "source_name": "Official city page (docsonline.sanantonio.gov What to Recycle), read Nov 2026; checked Nov 8, 2026",
   "contacts": {
     "recycling": "311",
     "hazardous": "311"
@@ -17,12 +17,12 @@
       "note": "San Antonio: clean metal cans; aluminum foil NOT accepted."
     },
     "spray_can": {
-      "bin": "special",
-      "reason": "hazardous",
+      "bin": "recycling",
+      "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "Aerosol cans (empty, no nozzles)",
+      "quote_verified": true,
+      "note": "Empty only, nozzle removed."
     },
     "plastic_bottle": {
       "bin": "recycling",
@@ -41,12 +41,12 @@
       "note": "San Antonio: yogurt/butter tubs OK, but hard or large plastic is not. Defaulted to trash."
     },
     "plastic_cup": {
-      "bin": "trash",
+      "bin": "recycling",
       "reason": "",
       "status": "manual",
-      "evidence": "",
-      "quote_verified": false,
-      "note": "Not addressed on the city's page; safe default. Check with the city."
+      "evidence": "Cups",
+      "quote_verified": true,
+      "note": "San Antonio Curbside Recycling Collection."
     },
     "plastic_bag": {
       "bin": "trash",

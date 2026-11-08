@@ -2,7 +2,7 @@
   "version": 1,
   "city": "Marietta, GA",
   "created": "2026-11-04T19:42:26",
-  "source_name": "City of Marietta sanitation page (entered by hand)",
+  "source_name": "City of Marietta sanitation page (entered by hand); checked Nov 8, 2026",
   "contacts": {
     "recycling": "770-794-5595",
     "hazardous": "Cobb County transfer station 770-528-2500"
@@ -70,7 +70,7 @@
       "status": "manual",
       "evidence": "",
       "quote_verified": false,
-      "note": ""
+      "note": "Marietta lists newspapers, phone books and magazines; office paper and mail aren't on the list. Check with the city (770-794-5595)."
     },
     "newspaper": {
       "bin": "recycling",
@@ -78,7 +78,7 @@
       "status": "manual",
       "evidence": "",
       "quote_verified": false,
-      "note": ""
+      "note": "Marietta: newspapers go in a paper grocery bag; loose newspapers aren't collected."
     },
     "paper_cup": {
       "bin": "trash",
