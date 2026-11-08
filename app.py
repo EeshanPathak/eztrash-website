@@ -202,8 +202,8 @@ def login():
             session["ok"] = True
             if ROTATE:
                 rotate_code()
-                return redirect(url_for("home", msg="You're in. The code you just used won't work again: "
-                                        "pass the new one below to the next person."))
+                return redirect(url_for("home", msg="You're in. The code you used won't work again; the trash "
+                                        "can's screen shows the new one (key 9 in its launcher)."))
             return redirect(url_for("home"))
         else:
             time.sleep(1)  # slows down guessing
@@ -249,10 +249,25 @@ def code_ok(code):
     return bool(mac) and hmac.compare_digest(_code_mac(code), mac)
 
 
+def can_key():
+    """The key the trash can uses to read the current code (shown on the Sync page; launcher option 8)."""
+    return hmac.new(str(app.secret_key).encode(), b"eztrash-can-key", hashlib.sha256).hexdigest()[:16]
+
+
+def lock_code(code, key, nonce):
+    """Shift each letter by a secret amount, so the code in the public repo can only be read with the key."""
+    ks = hmac.new(key.encode(), nonce.encode(), hashlib.sha256).digest()
+    return "".join(chr(65 + (ord(c) - 65 + ks[i]) % 26) for i, c in enumerate(code))
+
+
 def rotate_code():
     new = new_code()
     _rot["code"] = new
-    rbk._atomic_write(ACCESS_FILE, {"mac": _code_mac(new), "changed": time.strftime("%Y-%m-%d %H:%M")})
+    nonce = secrets.token_hex(8)
+    key = can_key()
+    rbk._atomic_write(ACCESS_FILE, {"mac": _code_mac(new), "nonce": nonce, "locked": lock_code(new, key, nonce),
+                                    "keycheck": hmac.new(key.encode(), b"keycheck", hashlib.sha256).hexdigest()[:8],
+                                    "changed": time.strftime("%Y-%m-%d %H:%M")})
     return new
 
 
@@ -368,7 +383,8 @@ def qr_terminal(text, color=True):
 def sync_page():
     url, public = share_url()
     return page(SYNC_PAGE, "Sync the trash can", url=url, public=public, on_cloud=ON_CLOUD, sync_key=SYNC_KEY,
-                gh_repo=rbk.GH_REPO if rbk.GH_ON else "", city=rbk.load_active()["city"])
+                gh_repo=rbk.GH_REPO if rbk.GH_ON else "", city=rbk.load_active()["city"],
+                can_key=can_key() if ROTATE else "")
 
 
 @app.route("/qr")
@@ -431,7 +447,7 @@ def home():
         bins[r["bin"]].append((info[0].split(" (")[0], r["reason"]))
     return page(HOME, "EZtrash", active=active, city_picked=city_picked, own_rules=own_rules, bins=bins, cov=model_coverage(), preset_groups=preset_groups,
                 saved=rbk.list_saved(), msg=request.args.get("msg", ""), err=request.args.get("err", "") or rbk.GH_ERROR,
-                rotate=ROTATE, next_code=_rot["code"])
+                )
 
 
 STATES = {"AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado",
@@ -899,9 +915,8 @@ table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid var(--li
 @media print{header,.noprint,.savebar{display:none!important}body{background:#fff}.sharepage .mute{color:#333}}
 input.codebox{font:800 1.8rem var(--display);letter-spacing:.35em;text-transform:uppercase;text-align:center;max-width:260px;padding:10px 12px}
 input.codebox::placeholder{color:var(--line);letter-spacing:.35em}
-.nextcode{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--chart,#C9DA3F);border-radius:10px;padding:10px 14px;margin:0 0 14px}
-.nextcode span{font-weight:700;font-size:.9rem}.nextcode b{font:800 1.4rem var(--display);letter-spacing:.3em}.nextcode small{flex-basis:100%;color:var(--mute,#5b6e63);font-size:.82rem}
-.syncpage .steps{text-align:left;margin:8px 0;padding-left:20px}.syncpage .card{text-align:left}
+.syncpage .steps{text-align:left;margin:8px 0;padding-left:20px}
+.copyrow{display:flex;gap:8px;align-items:center}.copyrow input{flex:1;min-width:0}.copyrow .copy{flex:none;min-width:84px}.syncpage .card{text-align:left}
 </style></head><body>
 <header><div class="bar"><a class="brand" href="/"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><clipPath id="c0C9"><path d="M12.60 23.0H51.40L47.55 50.0Q47.30 53.0 44.30 53.0H20.10Q17.10 53.0 16.85 50.0Z"/></clipPath></defs><rect width="64" height="64" rx="15" fill="#C9DA3F"/><path d="M27.5 13.6v-1.8c0-1 .8-1.8 1.8-1.8h5.4c1 0 1.8.8 1.8 1.8v1.8" fill="none" stroke="#13392B" stroke-width="2.6" stroke-linecap="round"/><rect x="9.5" y="13.5" width="45" height="5.6" rx="2.8" fill="#13392B"/><path d="M11.60 23.00 L31.40 23.00 L31.40 28.00 L12.27 28.00Z M14.93 48.00 L31.40 48.00 L31.40 54.00 L15.60 54.00Z M11.60 23.00 L18.00 23.00 L22.00 54.00 L15.60 54.00Z M14.60 35.50 L27.40 35.50 L27.40 40.50 L14.60 40.50Z M31.40 23.00 L52.40 23.00 L51.80 28.00 L31.40 28.00Z M31.40 48.00 L49.40 48.00 L48.80 54.00 L31.40 54.00Z M44.10 27.70 L51.80 27.70 L40.60 48.30 L33.30 48.30Z" fill="#13392B" clip-path="url(#c0C9)"/></svg><span class="word">EZtrash</span></a><span class="hdrbtns"><a class="qrbtn syncbtn" href="/sync" aria-label="Sync the trash can" title="Sync the trash can"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.6-4.5M4 13a8 8 0 0 0 14.6 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5.4 2.5v4h4M18.6 21.5v-4h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sync trash can</span></a><button type="button" class="theme" id="theme" aria-label="Switch between light and dark mode" title="Light / dark mode"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></span><script>(function(){var b=document.getElementById("theme"),r=document.documentElement;function dark(){return r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;}function label(){b.setAttribute("aria-label",dark()?"Switch to light mode":"Switch to dark mode");}b.addEventListener("click",function(){var t=dark()?"light":"dark";r.dataset.theme=t;try{localStorage.setItem("eztrash-theme",t);}catch(e){}label();});label();})();</script></div></header>
 <main>{{ content|safe }}</main></body></html>"""
@@ -919,10 +934,12 @@ SYNC_PAGE = """<div class="sharepage syncpage">
 <p class="mute">This website saves the rules to the GitHub repo <b>{{ gh_repo }}</b>. The trash can downloads them from there every
 90 seconds while it's sorting, even while this website is asleep.</p>
 <ol class="steps"><li>On the trash can, open the EZtrash launcher and press <b>8</b>.</li>
-<li>Paste this, then press Enter when it asks for a sync key:</li></ol>
-<input type="text" readonly value="github:{{ gh_repo }}" onclick="this.select()">
-<p class="mute">After that it syncs by itself. Once it's connected, press <b>9</b> in the launcher to show this website's QR code
-on the trash can's screen.</p></div>
+<li>When it asks <b>Connect to</b>, paste this:</li></ol>
+<div class="copyrow"><input type="text" readonly value="github:{{ gh_repo }}" onclick="this.select()" aria-label="Connect to"><button type="button" class="copy">Copy</button></div>
+<ol class="steps" start="3"><li>When it asks <b>Sync key</b>, paste this (it's different from the line above):</li></ol>
+<div class="copyrow"><input type="text" readonly value="{{ can_key }}" onclick="this.select()" aria-label="Sync key"><button type="button" class="copy">Copy</button></div>
+<p class="mute">After that it syncs by itself. Press <b>9</b> in the launcher to show this website's QR code and the current
+sign-in code on the trash can's screen. Keep the sync key private: it lets the can read the sign-in code.</p></div>
 {% elif on_cloud %}<div class="card connect"><h2>Connect the trash can (once)</h2>
 <p class="mute">The trash can downloads the rules from this website every 30 seconds while it's sorting. On the trash can, open the
 EZtrash launcher, press <b>8</b>, and paste these two things:</p>
@@ -936,19 +953,22 @@ show this website's QR code on the trash can's screen.</p></div>
 code they can scan. {% if not public %}It only works on the same Wi-Fi as the can unless the public link is on (launcher <b>2</b>).{% endif %}</p></div>
 {% endif %}
 <p><a class="btn alt" href="{{ url_for('home') }}">Back</a></p>
-</div>"""
+</div>
+<script>document.querySelectorAll(".copyrow .copy").forEach(function(b){b.addEventListener("click",function(){
+var i=b.previousElementSibling,t=i.value;function done(){b.textContent="Copied";setTimeout(function(){b.textContent="Copy";},1500);}
+if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(done,function(){i.select();document.execCommand("copy");done();});}
+else{i.select();document.execCommand("copy");done();}});});</script>"""
 
 
 LOGIN = """<h1>Sign in to EZtrash</h1><div class="card"><form method="post">
 <label for="code">Access code</label>
 <input id="code" name="code" type="text" class="codebox" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDEF" autofocus>
-<p class="mute">{% if rotate %}Ask the last person who signed in for the current 6-letter code. It changes after every sign-in.{% elif on_cloud %}Ask your team for the 6-letter code.{% else %}The code is printed in the terminal where app.py is running.{% endif %}</p>
+<p class="mute">{% if rotate %}The code is on the trash can's screen (press 9 in its EZtrash launcher). It changes after every sign-in.{% elif on_cloud %}Ask your team for the 6-letter code.{% else %}The code is printed in the terminal where app.py is running.{% endif %}</p>
 {% if error %}<p class="bad">{{ error }}</p>{% endif %}
 <button>Sign in</button></form></div>"""
 
 HOME = """{% if msg %}<div class="note">{{ msg }}</div>{% endif %}{% if err %}<div class="note bad">{{ err }}</div>{% endif %}
-{% if rotate and next_code %}<div class="nextcode"><span>Next sign-in code</span><b>{{ next_code }}</b>
-<small>The only code that works for the next person. It changes again when they sign in.</small></div>{% endif %}
+
 <section class="band" aria-label="Where the can is">
 {% if city_picked %}<p class="label">Sorting for</p>
 <div class="city">{{ active.city }}</div>
@@ -1141,6 +1161,10 @@ def _local_ip():
         return ip
     except OSError:
         return "127.0.0.1"
+
+
+if ROTATE and not _stored_mac():
+    rotate_code()   # first start: make a code the trash can can show
 
 
 if __name__ == "__main__":
